@@ -1,6 +1,6 @@
 import { config } from '../config';
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, TouchableHighlight, RefreshControl } from 'react-native';
 import PropTypes from 'prop-types';
 import {findIndex} from 'lodash';
 import { NavigationActions } from 'react-navigation';
@@ -28,7 +28,7 @@ class Timers extends React.Component {
 
   async componentWillMount() {
     await this.getTimers();
-    this.setState({socket: this.getSocket()});
+    this.setState({socket: this.getSocket(), isLoading: false});
   }
 
   getSocket() {
@@ -87,8 +87,43 @@ class Timers extends React.Component {
     .catch((error)=>{ console.log(error.message); });
   }
 
-  navigateToTimer(key, name) {
-    this.props.dispatch(NavigationActions.navigate({ routeName: 'Timer', params: {apiKey: key, title: name, socket: this.state.socket}}));
+  navigateToTimer(apiKey, name) {
+    this.props.dispatch(NavigationActions.navigate({ routeName: 'Timer', params: {apiKey: apiKey, title: name}}));
+  }
+
+  deleteTimer(apiKey) {
+    fetch(config.api + '/api/timer/' + apiKey, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + this.props.token,
+        'Accept': 'application/json',
+      },
+    })
+    .then((response)=>{
+      if (response.status >= 400 && response.status < 600) {
+        return response.text().then(err => {throw new Error(err);});
+      }
+    })
+    .then((response)=>{
+      let index = findIndex(this.props.timers, ['apiKey', apiKey]);
+
+      this.props.dispatch({
+        type: 'TIMER_DELETE',
+        index: index,
+      });
+    })
+    .catch((error)=>{ console.log(error.message); });
+  }
+
+  editTimer(apiKey) {
+    this.props.dispatch(NavigationActions.navigate({ routeName: 'EditTimer', params: {apiKey: apiKey}}));
+  }
+
+  _onRefresh() {
+    this.setState({isLoading: true});
+    this.componentWillMount().then(() => {
+      this.setState({isLoading: false});
+    });
   }
 
   render() {
@@ -100,11 +135,17 @@ class Timers extends React.Component {
           ItemSeparatorComponent={({highlighted}) => (
             <View style={[styles.separator, highlighted]} />
           )}
+          refreshControl={
+            <RefreshControl
+              refreshing={this.state.isLoading}
+              onRefresh={this._onRefresh.bind(this)}
+            />
+          }
           scrollEnabled={!this.state.isSwiping}
           contentContainerStyle={styles.timerList}
           data={timers}
           renderItem={({item}) =>
-          <Swipeable rightButtons={rightButtons} onSwipeStart={() => this.setState({isSwiping: true})} onSwipeRelease={() => this.setState({isSwiping: false})}>
+          <Swipeable rightButtons={rightButtons(()=>this.deleteTimer(item.apiKey), ()=>this.editTimer(item.apiKey))} onSwipeStart={() => this.setState({isSwiping: true})} onSwipeRelease={() => this.setState({isSwiping: false})}>
             <TouchableOpacity onPress={()=>this.navigateToTimer(item.apiKey, item.name)}>
               <TimerListing
                 name={item.name}
@@ -123,7 +164,6 @@ Timers.propTypes = {
   token: PropTypes.string,
   timers: PropTypes.arrayOf(PropTypes.object),
 };
-
 
 const mapStateToProps = state => ({
   token: state.token,
@@ -157,7 +197,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const rightButtons = [
-  <TouchableHighlight style={styles.swipeButtonDelete} key={2}><MaterialIcons name="delete" size={28} color="white" /></TouchableHighlight>,
-  <TouchableHighlight style={styles.swipeButtonEdit} key={1}><MaterialIcons name="edit" size={28} color="white" /></TouchableHighlight>,
+const rightButtons = (deleteTimer, editTimer) => [
+  <TouchableHighlight onPress={deleteTimer} style={styles.swipeButtonDelete} key={2}><MaterialIcons name="delete" size={28} color="white" /></TouchableHighlight>,
+  <TouchableHighlight onPress={editTimer} style={styles.swipeButtonEdit} key={1}><MaterialIcons name="edit" size={28} color="white" /></TouchableHighlight>,
 ];

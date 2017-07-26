@@ -9,6 +9,14 @@ export const timersReducer = (state = [], action) => {
         startTime: action.timer.startTime,
       }},
     });
+    case 'TIMER_EDIT': return update(state, {
+      [action.index]: {$merge: {
+        name: action.name,
+      }},
+    });
+    case 'TIMER_DELETE': return update(state, {
+      $splice: [[action.index,1]],
+    });
   }
 
   return state;

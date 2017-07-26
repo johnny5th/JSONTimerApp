@@ -69,12 +69,26 @@ class App extends React.Component {
     .catch((error)=>{ console.log(error.message); });
   }
 
+  logout() {
+    AsyncStorage.removeItem('@JSONTimer:token');
+    this.props.dispatch({
+      type: 'LOGOUT',
+    });
+
+    this.props.dispatch(NavigationActions.reset({
+      index: 0,
+      actions: [
+        NavigationActions.navigate({ routeName: 'Login'}),
+      ],
+    }));
+  }
+
   render() {
     return (
       <AppNavigator navigation={addNavigationHelpers({
         dispatch: this.props.dispatch,
         state: this.props.nav,
-      })} screenProps={{login: this.login.bind(this)}} />
+      })} screenProps={{login: this.login.bind(this), logout: this.logout.bind(this)}} />
     );
   }
 }
