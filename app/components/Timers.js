@@ -1,13 +1,11 @@
 import { config } from '../config';
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TouchableHighlight, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, FlatList, RefreshControl } from 'react-native';
 import PropTypes from 'prop-types';
 import {findIndex} from 'lodash';
 import { NavigationActions } from 'react-navigation';
 import { connect } from 'react-redux';
 import TimerListing from './TimerListing';
-import Swipeable from 'react-native-swipeable';
-import { MaterialIcons } from '@expo/vector-icons';
 
 if (!window.location) {
   // App is running in simulator
@@ -23,6 +21,7 @@ class Timers extends React.Component {
       isLoading: true,
       socket: null,
       isSwiping: false,
+      currentlyOpenItem: null,
     };
   }
 
@@ -104,7 +103,7 @@ class Timers extends React.Component {
         return response.text().then(err => {throw new Error(err);});
       }
     })
-    .then((response)=>{
+    .then(()=>{
       let index = findIndex(this.props.timers, ['apiKey', apiKey]);
 
       this.props.dispatch({
@@ -126,6 +125,12 @@ class Timers extends React.Component {
     });
   }
 
+  closeOpenItem() {
+    if (this.state.currentlyOpenItem) {
+      this.state.currentlyOpenItem.recenter();
+    }
+  }
+
   render() {
     let timers = this.props.timers.map((timer) => {timer.key = timer.apiKey; return timer;});
 
@@ -144,16 +149,27 @@ class Timers extends React.Component {
           scrollEnabled={!this.state.isSwiping}
           contentContainerStyle={styles.timerList}
           data={timers}
+          onScroll={this.closeOpenItem.bind(this)}
           renderItem={({item}) =>
-          <Swipeable rightButtons={rightButtons(()=>this.deleteTimer(item.apiKey), ()=>this.editTimer(item.apiKey))} onSwipeStart={() => this.setState({isSwiping: true})} onSwipeRelease={() => this.setState({isSwiping: false})}>
-            <TouchableOpacity onPress={()=>this.navigateToTimer(item.apiKey, item.name)}>
-              <TimerListing
-                name={item.name}
-                running={item.running}
-              />
-            </TouchableOpacity>
-          </Swipeable>
-        } />
+            <TimerListing
+              name={item.name}
+              running={item.running}
+              onPress={()=>this.navigateToTimer(item.apiKey, item.name)}
+              deleteTimer={()=>this.deleteTimer(item.apiKey)}
+              editTimer={()=>this.editTimer(item.apiKey)}
+              onSwipeStart={() => this.setState({isSwiping: true})}
+              onSwipeRelease={() => this.setState({isSwiping: false})}
+              onOpen={listItem => {
+                if (this.state.currentlyOpenItem && this.state.currentlyOpenItem !== listItem) {
+                  this.state.currentlyOpenItem.recenter();
+                }
+
+                this.setState({currentlyOpenItem: listItem});
+              }}
+              onClose={() => this.setState({currentlyOpenItem: null})}
+            />
+          }
+        />
       </View>
     );
   }
@@ -183,21 +199,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#c8c7cc',
   },
-  swipeButtonEdit: {
-    backgroundColor: 'green',
-    height: 55,
-    paddingTop: 14,
-    paddingLeft: 23,
-  },
-  swipeButtonDelete: {
-    backgroundColor: 'red',
-    height: 55,
-    paddingTop: 14,
-    paddingLeft: 23,
-  },
 });
-
-const rightButtons = (deleteTimer, editTimer) => [
-  <TouchableHighlight onPress={deleteTimer} style={styles.swipeButtonDelete} key={2}><MaterialIcons name="delete" size={28} color="white" /></TouchableHighlight>,
-  <TouchableHighlight onPress={editTimer} style={styles.swipeButtonEdit} key={1}><MaterialIcons name="edit" size={28} color="white" /></TouchableHighlight>,
-];

@@ -1,3 +1,3 @@
 export const config = {
-  api: 'https://jsontimer.com',
+  api: 'http://192.168.60.91:8080',
 };

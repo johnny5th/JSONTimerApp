@@ -15,6 +15,9 @@ export const AppNavigator = StackNavigator({
     screen: Login,
     navigationOptions: () => ({
       title: 'Login',
+      headerTitleStyle: {
+        alignSelf:'center',
+      },
     }),
   },
   Timers: {
@@ -23,6 +26,9 @@ export const AppNavigator = StackNavigator({
       title: 'Timers',
       headerLeft: <Button title='Logout' onPress={screenProps.logout} />,
       headerRight: <AddButton />,
+      headerTitleStyle: {
+        alignSelf:'center',
+      },
     }),
   },
   Timer: {
@@ -32,12 +38,18 @@ export const AppNavigator = StackNavigator({
     screen: AddTimer,
     navigationOptions: () => ({
       title: 'Add Timer',
+      headerTitleStyle: {
+        alignSelf:'center',
+      },
     }),
   },
   EditTimer: {
     screen: EditTimer,
     navigationOptions: () => ({
       title: 'Edit Timer',
+      headerTitleStyle: {
+        alignSelf:'center',
+      },
     }),
   },
 });
