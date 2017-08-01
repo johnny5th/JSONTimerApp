@@ -1,4 +1,3 @@
-import { config } from './app/config';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AsyncStorage } from 'react-native';
@@ -32,60 +31,25 @@ class App extends React.Component {
             type: 'LOGIN',
             token: token,
           });
-          this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
-          return;
+
+          // Reset navigation to timers
+          const actionToDispatch = NavigationActions.reset({
+            index: 0,
+            actions: [NavigationActions.navigate({ routeName: 'Timers' })],
+          });
+          return this.props.dispatch(actionToDispatch);
         }
       }
 
-      return this.props.dispatch(NavigationActions.navigate({ routeName: 'Login' }));
+      // Reset navigation to login
+      const actionToDispatch = NavigationActions.reset({
+        index: 0,
+        actions: [NavigationActions.navigate({ routeName: 'Login' })],
+      });
+      return this.props.dispatch(actionToDispatch);
     } catch (error) {
       console.log(error);
     }
-  }
-
-  login(email, password, cb) {
-    fetch(config.api + '/api/auth', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password,
-      }),
-    })
-    .then((response)=>{
-      if (response.status >= 400 && response.status < 600) {
-        return response.text().then(err => {throw new Error(err);});
-      }
-      return response.json();
-    })
-    .then((response)=>{
-      AsyncStorage.setItem('@JSONTimer:token', response.token);
-      this.props.dispatch({
-        type: 'LOGIN',
-        token: response.token,
-      });
-      this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
-
-      return cb();
-    })
-    .catch((error)=>{ cb(error.message); });
-  }
-
-  logout() {
-    AsyncStorage.removeItem('@JSONTimer:token');
-    this.props.dispatch({
-      type: 'LOGOUT',
-    });
-
-    this.props.dispatch(NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({ routeName: 'Login'}),
-      ],
-    }));
   }
 
   render() {
@@ -93,7 +57,7 @@ class App extends React.Component {
       <AppNavigator navigation={addNavigationHelpers({
         dispatch: this.props.dispatch,
         state: this.props.nav,
-      })} screenProps={{login: this.login.bind(this), logout: this.logout.bind(this)}} />
+      })}/>
     );
   }
 }

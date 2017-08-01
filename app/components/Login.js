@@ -1,8 +1,12 @@
+import { config } from '../config';
 import React from 'react';
-import { StyleSheet, Text, View, Button, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Button, TextInput, AsyncStorage, Alert } from 'react-native';
+import { NavigationActions } from 'react-navigation';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import Prompt from 'react-native-prompt';
 
-export default class Login extends React.Component {
+class Login extends React.Component {
   constructor(props) {
     super(props);
 
@@ -10,13 +14,104 @@ export default class Login extends React.Component {
       email: null,
       password: null,
       error: null,
+      forgotPromptVisible: false,
     };
   }
 
   login() {
-    this.props.screenProps.login(this.state.email, this.state.password, (err) => {
-      if(err) this.setState({error: err});
+    this.setState({
+      error: null,
     });
+
+    fetch(config.api + '/api/auth', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: this.state.email,
+        password: this.state.password,
+      }),
+    })
+    .then((response)=>{
+      if (response.status >= 400 && response.status < 600) {
+        return response.text().then(err => {throw new Error(err);});
+      }
+      return response.json();
+    })
+    .then((response)=>{
+      AsyncStorage.setItem('@JSONTimer:token', response.token);
+      this.props.dispatch({
+        type: 'LOGIN',
+        token: response.token,
+      });
+      this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
+    })
+    .catch((error)=>{ this.setState({error: error.message}); });
+  }
+
+  create() {
+    this.setState({
+      error: null,
+    });
+
+    fetch(config.api + '/api/user/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: this.state.email,
+        password: this.state.password,
+      }),
+    })
+    .then((response)=>{
+      if (response.status >= 400 && response.status < 600) {
+        return response.text().then(err => {throw new Error(err);});
+      }
+      return response.json();
+    })
+    .then((response)=>{
+      AsyncStorage.setItem('@JSONTimer:token', response.token);
+      this.props.dispatch({
+        type: 'LOGIN',
+        token: response.token,
+      });
+      this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
+    })
+    .catch((error)=>{ this.setState({error: error.message}); });
+  }
+
+  forgot(email) {
+    this.setState({
+      forgotPromptVisible: false,
+      error: null,
+    });
+
+    fetch(config.api + '/api/user/forgotpassword', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+      }),
+    })
+    .then((response)=>{
+      if (response.status >= 400 && response.status < 600) {
+        return response.text().then(err => {throw new Error(err);});
+      }
+    })
+    .then(()=>{
+      Alert.alert(
+        'Forgot Password',
+        'Please check your email and follow instructions to reset your password.',
+      );
+    })
+    .catch((error)=>{ this.setState({error: error.message}); });
   }
 
   render() {
@@ -25,6 +120,15 @@ export default class Login extends React.Component {
 
     return (
       <View style={styles.container}>
+        <Prompt
+          title='Forgot Password'
+          placeholder='Email Address'
+          visible={ this.state.forgotPromptVisible }
+          onCancel={ () => this.setState({
+            forgotPromptVisible: false,
+          }) }
+          onSubmit={ (value) => this.forgot(value)}
+        />
         <Text style={styles.title}>Login to JSONTimer</Text>
         {error}
 
@@ -34,7 +138,13 @@ export default class Login extends React.Component {
         <Text style={styles.label}>Password</Text>
         <TextInput ref={(c)=>{this.password = c;}} secureTextEntry={true} onSubmitEditing={this.login.bind(this)} returnKeyType='go' style={styles.input} onChangeText={(text) => this.setState({password: text})} />
 
-        <View style={{marginTop: 20}}><Button onPress={this.login.bind(this)} title='Login' /></View>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={this.login.bind(this)} title='Login' />
+          <Button onPress={this.create.bind(this)} title='Create Account' />
+          <Button onPress={()=>this.setState({
+            forgotPromptVisible: true,
+          })} title='Forgot Password' />
+        </View>
       </View>
     );
   }
@@ -42,8 +152,10 @@ export default class Login extends React.Component {
 
 Login.propTypes = {
   navigation: PropTypes.object,
-  screenProps: PropTypes.object,
+  dispatch: PropTypes.func,
 };
+
+export default connect()(Login);
 
 const styles = StyleSheet.create({
   container: {
@@ -51,7 +163,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: '10%',
     marginRight: '10%',
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   title: {
     fontSize: 24,
@@ -73,5 +185,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     height: 40,
     padding: 5,
+  },
+  buttonWrapper: {
+    marginTop: 20,
   },
 });

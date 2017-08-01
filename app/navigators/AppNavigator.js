@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-native';
+import { Button, AsyncStorage } from 'react-native';
 import { connect } from 'react-redux';
 import { StackNavigator, NavigationActions } from 'react-navigation';
 
@@ -26,9 +26,9 @@ export const AppNavigator = StackNavigator({
   },
   Timers: {
     screen: Timers,
-    navigationOptions: ({screenProps}) => ({
+    navigationOptions: ({navigation}) => ({
       title: 'Timers',
-      headerLeft: <Button title='Logout' onPress={screenProps.logout} />,
+      headerLeft: <Button title='Logout' onPress={()=>logout(navigation)} />,
       headerRight: <AddButton />,
       headerTitleStyle: {
         alignSelf:'center',
@@ -57,6 +57,20 @@ export const AppNavigator = StackNavigator({
     }),
   },
 });
+
+const logout = (navigation) => {
+  AsyncStorage.removeItem('@JSONTimer:token');
+  navigation.dispatch({
+    type: 'LOGOUT',
+  });
+
+  navigation.dispatch(NavigationActions.reset({
+    index: 0,
+    actions: [
+      NavigationActions.navigate({ routeName: 'Login'}),
+    ],
+  }));
+};
 
 // Add Button
 class Add extends React.Component {
