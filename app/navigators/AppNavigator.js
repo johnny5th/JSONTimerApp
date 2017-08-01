@@ -4,6 +4,7 @@ import { Button } from 'react-native';
 import { connect } from 'react-redux';
 import { StackNavigator, NavigationActions } from 'react-navigation';
 
+import SplashScreen from '../components/SplashScreen';
 import Login from '../components/Login';
 import Timers from '../components/Timers';
 import Timer from '../components/Timer';
@@ -11,13 +12,16 @@ import AddTimer from '../components/AddTimer';
 import EditTimer from '../components/EditTimer';
 
 export const AppNavigator = StackNavigator({
+  SplashScreen: {
+    screen: SplashScreen,
+    navigationOptions: () => ({
+      header: null,
+    }),
+  },
   Login: {
     screen: Login,
     navigationOptions: () => ({
-      title: 'Login',
-      headerTitleStyle: {
-        alignSelf:'center',
-      },
+      header: null,
     }),
   },
   Timers: {

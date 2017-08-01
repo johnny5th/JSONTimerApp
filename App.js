@@ -33,14 +33,17 @@ class App extends React.Component {
             token: token,
           });
           this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
+          return;
         }
       }
+
+      return this.props.dispatch(NavigationActions.navigate({ routeName: 'Login' }));
     } catch (error) {
       console.log(error);
     }
   }
 
-  login(email, password) {
+  login(email, password, cb) {
     fetch(config.api + '/api/auth', {
       method: 'POST',
       headers: {
@@ -65,8 +68,10 @@ class App extends React.Component {
         token: response.token,
       });
       this.props.dispatch(NavigationActions.navigate({ routeName: 'Timers' }));
+
+      return cb();
     })
-    .catch((error)=>{ console.log(error.message); });
+    .catch((error)=>{ cb(error.message); });
   }
 
   logout() {

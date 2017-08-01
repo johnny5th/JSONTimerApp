@@ -30,6 +30,10 @@ class Timers extends React.Component {
     this.setState({socket: this.getSocket(), isLoading: false});
   }
 
+  componentWillUnmount() {
+    this.state.socket.disconnect();
+  }
+
   getSocket() {
     const socket = io.connect(config.api, {
       path: '/api/socket',
