@@ -6,6 +6,7 @@ import { StackNavigator, NavigationActions } from 'react-navigation';
 
 import SplashScreen from '../components/SplashScreen';
 import Login from '../components/Login';
+import CreateAccount from '../components/CreateAccount';
 import Timers from '../components/Timers';
 import Timer from '../components/Timer';
 import AddTimer from '../components/AddTimer';
@@ -22,6 +23,12 @@ export const AppNavigator = StackNavigator({
     screen: Login,
     navigationOptions: () => ({
       header: null,
+    }),
+  },
+  CreateAccount: {
+    screen: CreateAccount,
+    navigationOptions: () => ({
+      title: 'Create Account',
     }),
   },
   Timers: {
