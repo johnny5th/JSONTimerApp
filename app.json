@@ -1,5 +1,15 @@
 {
   "expo": {
-    "sdkVersion": "18.0.0"
+   "name": "JSONTimer",
+   "icon": "./assets/jsontimer.png",
+   "version": "1.0.0",
+   "slug": "jsontimer-app",
+   "sdkVersion": "19.0.0",
+   "ios": {
+     "bundleIdentifier": "com.johnny5th.jsontimer"
+   },
+   "android": {
+     "package": "com.johnny5th.jsontimer"
+   }
   }
 }
